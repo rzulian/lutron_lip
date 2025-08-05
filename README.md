@@ -1,46 +1,28 @@
-script# Notice
+# Lutron LIP
+# Lutron Custom Component for Home Assistant
 
-The component and platforms in this repository are not meant to be used by a
-user, but as a "blueprint" that custom component developers can build
-upon, to make more awesome stuff.
+This integration connects to Lutron Systems supporting the Lutron Integration Protocol (LIP).
 
-HAVE FUN! 😎
+## Features:
+- **Homeworks QS and RadioRA support**
+- **Recursive areas**: Use parent areas in naming for easier identification, especially in large installations.
+- **QS_IO_INTERFACE support**
+- **Phantom keypads** support
+- **Seetouch international keypads** and a wide range of other keypads supported
+- **CCI support**
+- **Button states**: Supports press, release, hold, double tap, and hold-release statuses
+- **Entity name customization**: Specify if the entity name should include the Lutron area name and/or the parent area name. This is particularly useful in large deployments where multiple rooms may have devices with the same name (e.g., "Central light"), but you need unique names for each device.
+- **DB file caching**: Cache the database file to reduce reload time from the controller, which can be slow for large installations. Reloading is generally unnecessary.
+- **Variable support**: Read and set Lutron variables. Variables are not available from the controller database, so you must list the integration IDs for variables in the setup.
+- **Travel time-based shades**: Since shades often don't report the correct status (open or closed), this feature allows you to specify the travel time for each shade.
+- **Keypad LED control**: Keypad buttons configured as "integration" will be created as light devices (`LutronLedLight`), allowing you to control them.
+- **Full button functionality**: Supports press, release, hold, double tap, and hold-release statuses.
 
-## Why?
+## RadioRA Mode:
+This integration includes a **"RadioRa mode"**, which can be enabled during configuration. When enabled, the integration behaves similarly to the current "official" integration:
+- Button names are derived from engravings
+- Every valid button is added as a scene
+- LEDs are created as switches instead of lights
 
-This is simple, by having custom_components look (README + structure) the same
-it is easier for developers to help each other and for users to start using them.
-
-If you are a developer and you want to add things to this "blueprint" that you think more
-developers will have use for, please open a PR to add it :)
-
-## What?
-
-This repository contains multiple files, here is a overview:
-
-File | Purpose | Documentation
--- | -- | --
-`.devcontainer.json` | Used for development/testing with Visual Studio Code. | [Documentation](https://code.visualstudio.com/docs/remote/containers)
-`.github/ISSUE_TEMPLATE/*.yml` | Templates for the issue tracker | [Documentation](https://help.github.com/en/github/building-a-strong-community/configuring-issue-templates-for-your-repository)
-`custom_components/integration_blueprint/*` | Integration files, this is where everything happens. | [Documentation](https://developers.home-assistant.io/docs/creating_component_index)
-`CONTRIBUTING.md` | Guidelines on how to contribute. | [Documentation](https://help.github.com/en/github/building-a-strong-community/setting-guidelines-for-repository-contributors)
-`LICENSE` | The license file for the project. | [Documentation](https://help.github.com/en/github/creating-cloning-and-archiving-repositories/licensing-a-repository)
-`README.md` | The file you are reading now, should contain info about the integration, installation and configuration instructions. | [Documentation](https://help.github.com/en/github/writing-on-github/basic-writing-and-formatting-syntax)
-`requirements.txt` | Python packages used for development/lint/testing this integration. | [Documentation](https://pip.pypa.io/en/stable/user_guide/#requirements-files)
-
-## How?
-
-1. Create a new repository in GitHub, using this repository as a template by clicking the "Use this template" button in the GitHub UI.
-1. Open your new repository in Visual Studio Code devcontainer (Preferably with the "`Dev Containers: Clone Repository in Named Container Volume...`" option).
-1. Rename all instances of the `integration_blueprint` to `custom_components/<your_integration_domain>` (e.g. `custom_components/awesome_integration`).
-1. Rename all instances of the `Integration Blueprint` to `<Your Integration Name>` (e.g. `Awesome Integration`).
-1. Run the `scripts/develop` to start HA and test out your new integration.
-
-## Next steps
-
-These are some next steps you may want to look into:
-- Add tests to your integration, [`pytest-homeassistant-custom-component`](https://github.com/MatthewFlamm/pytest-homeassistant-custom-component) can help you get started.
-- Add brand images (logo/icon) to https://github.com/home-assistant/brands.
-- Create your first release.
-- Share your integration on the [Home Assistant Forum](https://community.home-assistant.io/).
-- Submit your integration to [HACS](https://hacs.xyz/docs/publish/start).
+## Communication:
+This integration uses the **aoilip** code to communicate with the Lutron Controller.
