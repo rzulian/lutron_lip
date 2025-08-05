@@ -1,0 +1,12 @@
+{
+  "domain": "lutron_lip",
+  "name": "Lutron LIP",
+  "codeowners": [
+    "@rzulian"
+  ],
+  "config_flow": true,
+  "documentation": "https://github.com/rzulian/lutron_lip",
+  "iot_class": "cloud_polling",
+  "issue_tracker": "https://github.com/rzulian/lutron_lip/issues",
+  "version": "0.1.0"
+}
