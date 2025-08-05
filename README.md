@@ -24,5 +24,10 @@ This integration includes a **"RadioRa mode"**, which can be enabled during conf
 - Every valid button is added as a scene
 - LEDs are created as switches instead of lights
 
+**Not supported in RadioRA mode**
+
+Current "official" integration creates Switch devices for every Lutron output entity which is not dimmable.
+This custom component instead create Light devices. Please check this for a full comparison https://github.com/rzulian/lutron_lip/wiki   
+
 ## Communication:
 This integration uses the **aoilip** code to communicate with the Lutron Controller.
