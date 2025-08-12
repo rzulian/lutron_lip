@@ -1,7 +1,6 @@
 """Config flow to configure the Lutron integration."""
 
 from __future__ import annotations
-
 import logging
 from typing import Any
 from urllib.error import HTTPError
