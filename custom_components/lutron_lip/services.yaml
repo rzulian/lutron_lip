@@ -1,0 +1,35 @@
+send_command:
+  description: Send device command through Cover.
+  fields:
+    command: {description: The command to be sent., example: 'open_cover'}
+    device_id: {description: device ID.}
+set_known_position:
+  name: Set known position
+  description: Set position acquired outside of this component without triggering action
+  target:
+    entity:
+      domain: cover
+  fields:
+    position:
+      description: position of cover, between 0 and 100
+      required: true
+      selector:
+        number:
+          min: 0
+          max: 100
+          unit_of_measurement: "%"
+    confident:
+      description: optional (default is false) - if we are confident in this position, i.e. affects if state is assumed or not. To be used for example with a contact sensor confirming that the position was really reached.
+      example: True
+    position_type:
+      description: optional (default is target) - specifies if the position we are passing in is the target or the current position. Defaults to target meaning we will transition slider from current position to given target. Specifying current will set to the current position immediately.
+      example: current
+set_known_action:
+  description: Action of open, stop or close captured outside of HA, trigger cover response in HA without triggering action
+  target:
+    entity:
+      domain: cover
+  fields:
+    action:
+      description: must be one of open, close or stop
+      example: open

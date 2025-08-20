@@ -6,6 +6,9 @@ from datetime import timedelta
 import logging
 from typing import Any
 
+
+import voluptuous as vol
+
 from homeassistant.components.cover import (
     ATTR_CURRENT_POSITION,
     ATTR_POSITION,
@@ -17,11 +20,19 @@ from homeassistant.const import (
     SERVICE_CLOSE_COVER,
     SERVICE_OPEN_COVER,
     SERVICE_STOP_COVER,
+    ATTR_ENTITY_ID
 )
+
+from homeassistant.components.cover import DOMAIN as COVER_DOMAIN
+
 from homeassistant.core import HomeAssistant, callback
-from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
+from homeassistant.helpers import entity_platform
+from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback, async_get_current_platform
+import homeassistant.helpers.config_validation as cv
 from homeassistant.helpers.event import async_track_time_interval
 from homeassistant.helpers.restore_state import RestoreEntity
+from homeassistant.helpers.service import async_extract_entity_ids
+
 
 from . import DOMAIN, LutronData
 from .aiolip import Device, LutronController, Output
@@ -35,7 +46,31 @@ CONF_TRAVELLING_TIME_UP = "travelling_time_up"
 CONF_SEND_STOP_AT_ENDS = "send_stop_at_ends"
 CONF_ALWAYS_CONFIDENT = "always_confident"
 
+# Cover constants
+ATTR_CONFIDENT = "confident"
+ATTR_ACTION = "action"
+ATTR_POSITION = "position"
+ATTR_POSITION_TYPE = "position_type"
+ATTR_POSITION_TYPE_CURRENT = "current"
+ATTR_POSITION_TYPE_TARGET = "target"
 ATTR_UNCONFIRMED_STATE = "unconfirmed_state"
+SERVICE_SET_KNOWN_POSITION = "set_known_position"
+SERVICE_SET_KNOWN_ACTION = "set_known_action"
+
+
+POSITION_SCHEMA = cv.make_entity_service_schema(
+    {
+        vol.Required(ATTR_ENTITY_ID): cv.entity_ids,
+        vol.Required(ATTR_POSITION): cv.positive_int,
+        vol.Optional(ATTR_CONFIDENT, default=False): cv.boolean,
+        vol.Optional(ATTR_POSITION_TYPE, default=ATTR_POSITION_TYPE_TARGET): cv.string,
+    }
+)
+
+
+ACTION_SCHEMA = cv.make_entity_service_schema(
+    {vol.Required(ATTR_ENTITY_ID): cv.entity_ids, vol.Required(ATTR_ACTION): cv.string}
+)
 
 
 async def async_setup_entry(
@@ -61,6 +96,17 @@ async def async_setup_entry(
             entities.append(LutronCover(device, entry_data.controller, config_entry))
 
     async_add_entities(entities, True)
+
+    # create services
+    platform = async_get_current_platform()
+
+    platform.async_register_entity_service(
+        SERVICE_SET_KNOWN_POSITION, POSITION_SCHEMA, "set_known_position"
+    )
+
+    platform.async_register_entity_service(
+        SERVICE_SET_KNOWN_ACTION, ACTION_SCHEMA, "set_known_action"
+    )
 
 
 class LutronCoverTimeBased(LutronOutput, CoverEntity, RestoreEntity):
@@ -280,72 +326,80 @@ class LutronCoverTimeBased(LutronOutput, CoverEntity, RestoreEntity):
         """Return if cover has reached its final position."""
         return self.tc.position_reached()
 
-    #  async def set_known_action(self, **kwargs):
-    #     """We want to do a few things when we get a position"""
-    #     action = kwargs[ATTR_ACTION]
-    #     if action not in ["open", "close", "stop"]:
-    #         raise ValueError("action must be one of open, close or cover.")
-    #     if action == "stop":
-    #         self._handle_stop()
-    #         return
-    #     if action == "open":
-    #         self.tc.start_travel_up()
-    #         self._target_position = 100
-    #     if action == "close":
-    #         self.tc.start_travel_down()
-    #         self._target_position = 0
-    #     self.start_auto_updater()
+    async def set_known_action(self, **kwargs):
+        """This mimics cover movement without actually sending out commands to the covers."""
+        action = kwargs[ATTR_ACTION]
+        if action not in ["open", "close", "stop"]:
+            raise ValueError("action must be one of open, close or stop.")
+        if action == "stop":
+            self._handle_stop()
+            return
+        if action == "open":
+            self.tc.start_travel_up()
+            self._target_position = 100
+        if action == "close":
+            self.tc.start_travel_down()
+            self._target_position = 0
+        self.start_auto_updater()
 
-    #  async def set_known_position(self, **kwargs):
-    #     """We want to do a few things when we get a position"""
-    #     position = kwargs[ATTR_POSITION]
-    #     confident = kwargs[ATTR_CONFIDENT] if ATTR_CONFIDENT in kwargs else False
-    #     position_type = (
-    #         kwargs[ATTR_POSITION_TYPE]
-    #         if ATTR_POSITION_TYPE in kwargs
-    #         else ATTR_POSITION_TYPE_TARGET
-    #     )
-    #     if position_type not in [ATTR_POSITION_TYPE_TARGET, ATTR_POSITION_TYPE_CURRENT]:
-    #         raise ValueError(
-    #             ATTR_POSITION_TYPE + " must be one of %s, %s",
-    #             ATTR_POSITION_TYPE_TARGET,
-    #             ATTR_POSITION_TYPE_CURRENT,
-    #         )
-    #     _LOGGER.debug(
-    #         self._attr_name
-    #         + ": "
-    #         + "set_known_position :: position  %d, confident %s, position_type %s, self.tc.is_traveling%s",
-    #         position,
-    #         str(confident),
-    #         position_type,
-    #         str(self.tc.is_traveling()),
-    #     )
-    #     self._assume_uncertain_position = (
-    #         not confident if not self._always_confident else False
-    #     )
-    #     self._processing_known_position = True
-    #     if position_type == ATTR_POSITION_TYPE_TARGET:
-    #         self._target_position = position
-    #         position = self.current_cover_position
-    #
-    #     if self.tc.is_traveling():
-    #         self.tc.set_position(position)
-    #         self.tc.start_travel(self._target_position)
-    #         self.start_auto_updater()
-    #     else:
-    #         if position_type == ATTR_POSITION_TYPE_TARGET:
-    #             self.tc.start_travel(self._target_position)
-    #             self.start_auto_updater()
-    #         else:
-    #             _LOGGER.debug(
-    #                 self._attr_name
-    #                 + ": "
-    #                 + "set_known_position :: non_traveling position  %d, confident %s, position_type %s",
-    #                 position,
-    #                 str(confident),
-    #                 position_type,
-    #             )
-    #             self.tc.set_position(position)
+    async def set_known_position(self, **kwargs):
+        """This lets you specify the position of the cover.
+
+        confident: default false
+
+        position_type
+        1. target (default): cover will transition to position without triggering any start or stop action
+        2. current: the current position is moved immediately to position and stops there
+                (provided cover is not moving, otherwise will continue moving to original target)
+
+        """
+        position = kwargs[ATTR_POSITION]
+        confident = kwargs[ATTR_CONFIDENT] if ATTR_CONFIDENT in kwargs else False
+        position_type = (
+            kwargs[ATTR_POSITION_TYPE]
+            if ATTR_POSITION_TYPE in kwargs
+            else ATTR_POSITION_TYPE_TARGET
+        )
+        if position_type not in [ATTR_POSITION_TYPE_TARGET, ATTR_POSITION_TYPE_CURRENT]:
+            raise ValueError(
+                ATTR_POSITION_TYPE + " must be one of %s, %s",
+                ATTR_POSITION_TYPE_TARGET,
+                ATTR_POSITION_TYPE_CURRENT,
+            )
+        _LOGGER.debug(
+            "%s: set_known_position :: position  %d, confident %s, position_type %s, self.tc.is_traveling%s",
+            self._attr_name,
+            position,
+            str(confident),
+            position_type,
+            str(self.tc.is_traveling()),
+        )
+        self._assume_uncertain_position = (
+            not confident if not self._always_confident else False
+        )
+        self._processing_known_position = True
+        if position_type == ATTR_POSITION_TYPE_TARGET:
+            self._target_position = position
+            position = self.current_cover_position
+
+        if self.tc.is_traveling():
+            self.tc.set_position(position)
+            self.tc.start_travel(self._target_position)
+            self.start_auto_updater()
+        else:
+            if position_type == ATTR_POSITION_TYPE_TARGET:
+                self.tc.set_position(self._target_position)
+                self.tc.start_travel(self._target_position)
+                self.start_auto_updater()
+            else:
+                _LOGGER.debug(
+                    "%s:set_known_position :: non_traveling position  %d, confident %s, position_type %s",
+                    self._attr_name,
+                    position,
+                    str(confident),
+                    position_type,
+                )
+                self.tc.set_position(position)
 
     async def auto_stop_if_necessary(self):
         """Do auto stop if necessary."""
