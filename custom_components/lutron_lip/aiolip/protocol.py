@@ -117,9 +117,13 @@ class LIPParser:
         """Return last keepalive response."""
         return self._last_keep_alive_response
 
-    def parse(self, response: str) -> LIPMessage | None:
+    def parse(self, response: str | None) -> LIPMessage | None:
         """Parse a LIP response and update the internal state. Returns a LIPMessage or None."""
         if not response or self._empty_re.match(response):
+            return None
+
+        response = response.strip()
+        if not response:
             return None
 
         response = self._clean_prompt_re.sub("", response)

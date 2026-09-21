@@ -115,7 +115,7 @@ class LutronLight(LutronOutput, LightEntity):
         #     return self._lutron_device.flash(0.5 if flash == "short" else 1.5)
         if ATTR_BRIGHTNESS in kwargs and self._lutron_device.is_dimmable:
             brightness = kwargs[ATTR_BRIGHTNESS]
-        elif self._prev_brightness == 0:
+        elif self._prev_brightness is None or self._prev_brightness == 0:
             brightness = self._config_entry.options.get(
                 CONF_DEFAULT_DIMMER_LEVEL, DEFAULT_DIMMER_LEVEL
             )
