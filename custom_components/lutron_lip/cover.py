@@ -575,6 +575,7 @@ class LutronCover(LutronOutput, CoverEntity):
         CoverEntityFeature.OPEN
         | CoverEntityFeature.CLOSE
         | CoverEntityFeature.SET_POSITION
+        | CoverEntityFeature.STOP
     )
 
     _attr_is_closed: bool | None = None
@@ -604,6 +605,10 @@ class LutronCover(LutronOutput, CoverEntity):
         if ATTR_POSITION in kwargs:
             position = kwargs[ATTR_POSITION]
             await self._execute_device_command(self._lutron_device.set_level, position)
+
+    async def async_stop_cover(self, **kwargs: Any) -> None:
+        """Stop the shade mid-travel (LIP #OUTPUT,<id>,4)."""
+        await self._execute_device_command(self._lutron_device.stop)
 
     async def _request_state(self) -> None:
         """Request the state of the cover."""
