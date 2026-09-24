@@ -8,5 +8,5 @@
   "documentation": "https://github.com/rzulian/lutron_lip",
   "iot_class": "local_polling",
   "issue_tracker": "https://github.com/rzulian/lutron_lip/issues",
-  "version": "0.1.5"
+  "version": "0.1.6"
 }
