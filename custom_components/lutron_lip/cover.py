@@ -17,6 +17,8 @@ from homeassistant.components.cover import (
 )
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import (
+    MAJOR_VERSION,
+    MINOR_VERSION,
     SERVICE_CLOSE_COVER,
     SERVICE_OPEN_COVER,
     SERVICE_STOP_COVER,
@@ -143,7 +145,11 @@ async def async_setup_entry(
 
     async def _prepare_forward(call: ServiceCall, debug_service_name: str) -> tuple[list[str] | None, dict | None]:
         # Start with any entities provided (will expand HA "group.*" via helper)
-        base_ids = list(await async_extract_entity_ids(hass, call))
+        if (MAJOR_VERSION, MINOR_VERSION) >= (2025, 10):
+            base_ids = list(await async_extract_entity_ids(call))
+        else:
+            # HA 2025.7-2025.9 still require the hass argument.
+            base_ids = list(await async_extract_entity_ids(hass, call))
         if not base_ids and ATTR_ENTITY_ID in call.data:
             data_eids = call.data.get(ATTR_ENTITY_ID)
             if isinstance(data_eids, str):
