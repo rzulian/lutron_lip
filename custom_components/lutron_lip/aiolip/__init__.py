@@ -190,8 +190,9 @@ class LutronController:
 
     async def stop(self):
         """Stop the connection to the controller."""
-        if self.connected:
-            await self.lip.async_stop()
+        # Stop even when not connected: a reconnect in progress keeps retrying
+        # until it is told to stop, and would otherwise outlive the entry.
+        await self.lip.async_stop()
 
     async def _ensure_connected(self) -> None:
         """Ensure the controller is connected before sending commands."""
