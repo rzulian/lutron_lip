@@ -95,7 +95,7 @@ class LutronXmlDbParser:
         name = area_xml.get("Name")
         occupancy_group_id = area_xml.get("OccupancyGroupAssignedToID")
         occupancy_group = self._occupancy_groups.get(occupancy_group_id)
-        if occupancy_group_id and not occupancy_group:
+        if occupancy_group_id and not occupancy_group and not occupancy_group_id == 0:
             _LOGGER.warning(
                 "Occupancy Group not found for Area: %s; ID: %s",
                 name,
