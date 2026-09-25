@@ -3,12 +3,24 @@
 from collections.abc import Callable, Mapping
 from typing import Any
 
-from homeassistant.const import ATTR_IDENTIFIERS, ATTR_VIA_DEVICE
+from homeassistant.const import ATTR_IDENTIFIERS
 from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.entity import Entity
 
 from .aiolip import Device, KeypadComponent, LutronController, Output, Sysvar
 from .const import DOMAIN
+
+
+def _get_via_device_info(controller: LutronController) -> DeviceInfo:
+    """Link to the registered controller using the API supported by Home Assistant."""
+    if "via_device_id" in DeviceInfo.__annotations__:
+        if controller.device_registry_id is None:
+            msg = "The Lutron controller must be registered before creating entities"
+            raise RuntimeError(msg)
+        return DeviceInfo(via_device_id=controller.device_registry_id)
+
+    # Home Assistant versions before 2026.8 only accept the identifier tuple.
+    return {"via_device": (DOMAIN, controller.guid)}
 
 
 class LutronBaseEntity(Entity):
@@ -36,7 +48,7 @@ class LutronBaseEntity(Entity):
             manufacturer="Lutron",
             name=self.device_name,
             suggested_area=self.area_name,
-            via_device=(DOMAIN, controller.guid),
+            **_get_via_device_info(controller),
         )
 
     @property
@@ -161,9 +173,10 @@ class LutronKeypadComponent(LutronBaseEntity):
             suggested_area=self.area_name,
         )
         if lutron_device.keypad.device_type == "MAIN_REPEATER":
+            # Its buttons and LEDs belong to the controller device itself.
             self._attr_device_info[ATTR_IDENTIFIERS].add((DOMAIN, controller.guid))
         else:
-            self._attr_device_info[ATTR_VIA_DEVICE] = (DOMAIN, controller.guid)
+            self._attr_device_info.update(_get_via_device_info(controller))
 
     @property
     def name(self) -> str:

@@ -290,12 +290,13 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry) -> b
         )
 
     # create the device for the Controller
-    device_registry.async_get_or_create(
+    controller_device = device_registry.async_get_or_create(
         config_entry_id=config_entry.entry_id,
         identifiers={(DOMAIN, lutron_controller.guid)},
         manufacturer="Lutron",
         name="Lutron Controller",
     )
+    lutron_controller.device_registry_id = controller_device.id
 
     hass.data.setdefault(DOMAIN, {})[config_entry.entry_id] = entry_data
 

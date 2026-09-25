@@ -88,6 +88,8 @@ class LutronController:
             tuple[int, int | None], list[Callable[[Any], None]]
         ] = {}  # integration_id, component_number -> list of entities
         self.guid: str = "no guid"
+        # Home Assistant registry ID, assigned before platform setup.
+        self.device_registry_id: str | None = None
         self.areas: list[Any] = []  # List[Area] type
         self.variables: list[Sysvar] = []
         self.name: str | None = None

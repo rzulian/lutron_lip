@@ -3,6 +3,12 @@
 
 This integration connects to Lutron Systems supporting the Lutron Integration Protocol (LIP).
 
+## Home Assistant compatibility
+
+Home Assistant 2025.7.4 is the minimum supported version. On Home Assistant
+2026.8 and later, devices link to the controller using its device registry ID.
+Earlier supported releases continue to use the legacy controller link format.
+
 ## Features:
 - **Homeworks QS and RadioRA support**
 - **Recursive areas**: Use parent areas in naming for easier identification, especially in large installations.
